@@ -1,0 +1,135 @@
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "binary"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  entityType  String
+  entityId    String
+  action      String
+  actorId     String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+}
+
+model FinancialLedger {
+  id            String   @id @default(uuid())
+  relatedType   String
+  relatedId     String
+  operation     LedgerOperation
+  amount        Float
+  currency      String
+  actorId       String?
+  createdAt     DateTime @default(now())
+}
+
+enum UserRole {
+  buyer
+  seller
+  trusted_seller
+  admin
+}
+
+enum TrustLevel {
+  normal
+  trusted
+  suspended
+}
+
+enum OrderStatus {
+  created
+  funds_frozen
+  awaiting_admin_review
+  approved
+  rejected
+  cancelled_by_admin
+  completed
+}
+
+enum PaymentStatus {
+  initiated
+  frozen
+  released
+  refunded
+  failed
+}
+
+enum LedgerOperation {
+  freeze
+  release
+  refund
+  fee
+}
+
+model User {
+  id         String     @id @default(uuid())
+  email      String     @unique
+  role       UserRole
+  trustLevel TrustLevel @default(normal)
+  isActive   Boolean    @default(true)
+
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  products     Product[]
+  ordersBuyer  Order[]   @relation("BuyerOrders")
+  ordersSeller Order[]   @relation("SellerOrders")
+}
+
+model Product {
+  id        String   @id @default(uuid())
+  sellerId  String
+  seller    User     @relation(fields: [sellerId], references: [id])
+
+  type      String
+  condition String
+
+  title     String
+  price     Float
+  currency  String
+
+  status    String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orders    Order[]
+}
+
+model Order {
+  id        String      @id @default(uuid())
+
+  buyerId   String
+  sellerId  String
+  productId String
+
+  buyer     User        @relation("BuyerOrders", fields: [buyerId], references: [id])
+  seller    User        @relation("SellerOrders", fields: [sellerId], references: [id])
+  product   Product     @relation(fields: [productId], references: [id])
+
+  status    OrderStatus
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  payment   Payment?
+}
+
+model Payment {
+  id        String        @id @default(uuid())
+  orderId   String        @unique
+  order     Order         @relation(fields: [orderId], references: [id])
+
+  amount    Float
+  currency  String
+  status    PaymentStatus
+
+  frozenAt   DateTime?
+  releasedAt DateTime?
+  refundedAt DateTime?
+}

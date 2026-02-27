@@ -1,48 +1,87 @@
+
 # SHOPKEEPER STATE FILE
 
-## Product Vision
-Centralized escrow-controlled multi-vendor marketplace.
+Last Update: 27.02.2026
 
-## Roles
-- buyer
-- seller
-- trusted_seller
-- admin
+---
 
-## Core Rules
+## Project Vision
 
-### Escrow
-- Funds freeze automatically
-- Only admin can release by default
-- Trusted seller may release if granted permission
-- Admin can override any process
+Centralized escrow-controlled high-tech marketplace
+with hybrid B2C retail and B2B wholesale exchange model.
 
-### Preorder
-- Only admin can cancel preorder
-- No seller or buyer cancellation
+Retail builds trust.
+Wholesale builds liquidity.
+Premium Guarantee monetizes trust in B2B.
 
-### Payments
-- Provider-based freeze
-- Timer limits = provider maximum
+---
 
-## Architecture Strategy
-- Domain-driven structure
-- Permission engine centralized
-- Escrow engine isolated
-- No business logic in UI
+# Global Structure
 
-## Current Phase
-Phase 1 – Domain modeling
+- New (Retail)
+- Used (Retail)
+- Used (Wholesale Exchange)
+- Used (Wholesale Premium Guarantee)
 
-## Next Step
-Implement domain entities and permission engine
+Retail = Escrow-controlled marketplace  
+Wholesale = Contact-based B2B exchange  
+Wholesale Premium = Manual Escrow Guarantee Module
 
+---
 
-## Current Phase
-Phase 1 – Permission Engine implemented
+# Used Module Architecture
 
-## System Status
-Permission engine centralized
-All role logic abstracted
-Admin has absolute override
-Trusted seller release capability enabled
+## Used Retail
+
+- Escrow-controlled
+- Mandatory image
+- maxQuantityPerOrder required
+- Optional badge: "Прошёл предпродажную подготовку"
+- Payment through platform
+
+---
+
+## Used Wholesale (Standard)
+
+- No escrow
+- Contact-only
+- 72h expiration
+- Multi-model batches
+- Free in MVP
+
+---
+
+## Used Wholesale Premium (Guarantee)
+
+- Manual activation only
+- Admin approval required
+- Trusted sellers only
+- 4–6% commission
+- Exposure limits
+- Separate EscrowDeal entity
+- Three-party agreement required
+- Platform acts as agent
+- Not automatic
+- Not mass-enabled
+
+Philosophy:
+Premium financial instrument for selected B2B deals.
+
+---
+
+# Risk Policy (Foundational Rule)
+
+Premium Guarantee must:
+
+- Never be automatic
+- Always be manually approved
+- Be limited by exposure cap
+- Maintain reserve coverage
+- Be treated as high-risk financial instrument
+
+---
+
+# Current Phase
+
+Phase 4 – Database integration + Used module structural expansion
+Premium Guarantee logically defined (future implementation).
