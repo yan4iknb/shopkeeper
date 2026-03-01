@@ -1,30 +1,29 @@
-
 # SHOPKEEPER STATE FILE
 
-Last Update: 27.02.2026
+Last Update: 01.03.2026
 
 ---
 
 ## Project Vision
 
 Centralized escrow-controlled high-tech marketplace
-with hybrid B2C retail and B2B wholesale exchange model.
+with hybrid B2C retail and public B2B wholesale exchange.
 
 Retail builds trust.
 Wholesale builds liquidity.
-Premium Guarantee monetizes trust in B2B.
+Premium Guarantee monetizes selective trust in B2B.
 
 ---
 
 # Global Structure
 
 - New (Retail)
-- Used (Retail)
-- Used (Wholesale Exchange)
-- Used (Wholesale Premium Guarantee)
+- Used (Retail – controlled & moderated)
+- Wholesale (Public Lot Exchange)
+- Wholesale Premium (Manual Escrow Guarantee)
 
 Retail = Escrow-controlled marketplace  
-Wholesale = Contact-based B2B exchange  
+Wholesale = Public B2B lot exchange  
 Wholesale Premium = Manual Escrow Guarantee Module
 
 ---
@@ -36,22 +35,30 @@ Wholesale Premium = Manual Escrow Guarantee Module
 - Escrow-controlled
 - Mandatory image
 - maxQuantityPerOrder required
+- Admin moderation required before activation
 - Optional badge: "Прошёл предпродажную подготовку"
 - Payment through platform
 
+Risk type: Quality risk (controlled by moderation)
+
 ---
 
-## Used Wholesale (Standard)
+## Wholesale (Standard – Lot Exchange)
 
+- Public visibility (no login required)
 - No escrow
 - Contact-only
 - 72h expiration
-- Multi-model batches
-- Free in MVP
+- quantityAvailable required
+- Up to 3 price tiers per offer
+- Dynamic lot model
+- Seller page acts as price list
+
+Risk type: Counterparty risk (outside platform)
 
 ---
 
-## Used Wholesale Premium (Guarantee)
+## Wholesale Premium (Guarantee)
 
 - Manual activation only
 - Admin approval required
@@ -62,10 +69,9 @@ Wholesale Premium = Manual Escrow Guarantee Module
 - Three-party agreement required
 - Platform acts as agent
 - Not automatic
-- Not mass-enabled
+- Rare use instrument
 
-Philosophy:
-Premium financial instrument for selected B2B deals.
+Risk type: Financial risk (strictly controlled)
 
 ---
 
@@ -83,5 +89,7 @@ Premium Guarantee must:
 
 # Current Phase
 
-Phase 4 – Database integration + Used module structural expansion
-Premium Guarantee logically defined (future implementation).
+Phase 4 – Database integration complete
+Wholesale v1 (lot-based model) defined
+Used Retail moderation defined
+Premium Guarantee logically finalized (future implementation)

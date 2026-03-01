@@ -1,7 +1,6 @@
+# SHOPKEEPER DOMAIN MODEL v1.3
 
-# SHOPKEEPER DOMAIN MODEL v1.2
-
-Last Update: 27.02.2026
+Last Update: 01.03.2026
 
 ---
 
@@ -10,7 +9,7 @@ Last Update: 27.02.2026
 Hybrid architecture:
 
 Retail = Escrow-controlled marketplace  
-Wholesale = Contact-based B2B exchange  
+Wholesale = Public B2B lot exchange (no escrow)  
 Wholesale Premium = Manual Escrow Guarantee Module
 
 ---
@@ -54,43 +53,60 @@ Product:
 - createdAt
 - updatedAt
 
+ProductImage:
+- id
+- productId
+- url
+- isPrimary
+- createdAt
+
 Rules:
 - Used retail must contain at least one image
 - maxQuantityPerOrder required
 - No public stock tracking
+- Used retail requires moderation approval before activation
 
 ---
 
-# Wholesale Module (Standard)
+# Wholesale Module (Standard – Public Lot Exchange)
 
 WholesaleOffer:
 - id: UUID
 - sellerId
+- modelName
+- condition: new | used
 - location
-- status: active | pending_confirmation | inactive
-- confirmedAt
-- expiresAt
+- quantityAvailable (required, > 0)
+- description
+- expiresAt (createdAt + 72h)
+- status: active | expired | suspended
 - createdAt
 - updatedAt
 
-WholesaleOfferItem:
-- id: UUID
-- wholesaleOfferId
-- modelName
-- condition
-
 WholesalePriceTier:
 - id: UUID
-- wholesaleOfferItemId
+- wholesaleOfferId
 - minQuantity
 - pricePerUnit
 
 Rules:
-- Wholesale offers expire after 72 hours
-- Manual renewal required
+- Wholesale offers auto-expire after 72 hours
+- No manual admin confirmation required
+- Publicly visible without login
 - No escrow support
-- No stock tracking
-- Max 3 price tiers per item
+- No stock reservation
+- quantityAvailable required
+- Max 3 price tiers per offer
+- minQuantity must:
+    - be > 0
+    - be ≤ quantityAvailable
+    - be strictly increasing
+- pricePerUnit must:
+    - be > 0
+    - decrease or remain equal as quantity increases
+
+Wholesale model = dynamic lot-based exchange.
+Seller page acts as structured price list.
 
 ---
 
@@ -103,6 +119,7 @@ Premium Guarantee is:
 - Limited by exposure
 - High-risk controlled
 - Commission-based (4–6%)
+- Rare instrument (not mass-enabled)
 
 WholesaleGuaranteeRequest:
 - id
@@ -123,6 +140,8 @@ WholesaleEscrowDeal:
 - sellerId
 - amount
 - guaranteeFeePercent
+- buyerAgreementAcceptedAt
+- sellerAgreementAcceptedAt
 - status:
     - created
     - funds_frozen
@@ -135,7 +154,7 @@ WholesaleEscrowDeal:
 Rules:
 - Only trusted sellers eligible
 - Each deal manually approved by admin
-- Max exposure limits apply
+- Exposure limits must be enforced
 - Commission retained as platform income
 - Platform acts as agent, not seller
 - Not automatic
@@ -166,23 +185,13 @@ Rules:
 
 ---
 
-# Payment
-
-Retail:
-- One Payment per Order
-
-Wholesale Premium:
-- One EscrowDeal per approved request
-- Funds frozen before shipment
-
----
-
 # System Invariants
 
 1. Retail products must define maxQuantityPerOrder
 2. Used retail requires at least one image
-3. Wholesale offers auto-expire after 72h
-4. Standard Wholesale has no escrow integration
-5. Premium Guarantee requires manual admin approval
-6. Exposure limits must be enforced
-7. Admin override always possible
+3. Used retail requires moderation before activation
+4. Wholesale offers auto-expire after 72h
+5. Standard Wholesale has no escrow integration
+6. Premium Guarantee requires manual admin approval
+7. Exposure limits must be enforced
+8. Admin override always possible
