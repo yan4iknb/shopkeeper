@@ -6,90 +6,83 @@ Last Update: 01.03.2026
 
 ## Project Vision
 
-Centralized escrow-controlled high-tech marketplace
-with hybrid B2C retail and public B2B wholesale exchange.
+High-tech hybrid marketplace:
 
-Retail builds trust.
-Wholesale builds liquidity.
-Premium Guarantee monetizes selective trust in B2B.
+Retail builds trust  
+Wholesale builds liquidity  
+Premium monetizes selective B2B trust  
+Promotion monetizes visibility
 
 ---
 
 # Global Structure
 
-- New (Retail)
-- Used (Retail – controlled & moderated)
+- Retail (New / Used – moderated)
 - Wholesale (Public Lot Exchange)
-- Wholesale Premium (Manual Escrow Guarantee)
-
-Retail = Escrow-controlled marketplace  
-Wholesale = Public B2B lot exchange  
-Wholesale Premium = Manual Escrow Guarantee Module
+- Wholesale Premium (Manual Escrow)
+- Promotion Layer (Visibility engine)
 
 ---
 
-# Used Module Architecture
-
-## Used Retail
+# Used Retail
 
 - Escrow-controlled
 - Mandatory image
+- Moderation required
 - maxQuantityPerOrder required
-- Admin moderation required before activation
-- Optional badge: "Прошёл предпродажную подготовку"
-- Payment through platform
+- Optional pre-sale badge
 
-Risk type: Quality risk (controlled by moderation)
+Risk: Quality risk (platform-controlled)
 
 ---
 
-## Wholesale (Standard – Lot Exchange)
+# Wholesale (Standard)
 
-- Public visibility (no login required)
-- No escrow
-- Contact-only
-- 72h expiration
+- Public visibility
 - quantityAvailable required
-- Up to 3 price tiers per offer
-- Dynamic lot model
+- Up to 3 price tiers
+- 72h expiration
+- No escrow
+- No stock reservation
 - Seller page acts as price list
 
-Risk type: Counterparty risk (outside platform)
+Risk: Counterparty risk (external)
 
 ---
 
-## Wholesale Premium (Guarantee)
+# Promotion Layer
 
-- Manual activation only
-- Admin approval required
+- Applies to Product and WholesaleOffer
+- boost / featured / pinned
+- Time-limited
+- Does not alter original data
+- Affects ranking only
+- Future monetization engine
+
+Monetization path:
+Phase 1 – Manual activation
+Phase 2 – Paid boost
+Phase 3 – Automated purchase
+
+---
+
+# Wholesale Premium
+
 - Trusted sellers only
-- 4–6% commission
+- Manual admin approval
 - Exposure limits
-- Separate EscrowDeal entity
-- Three-party agreement required
-- Platform acts as agent
-- Not automatic
-- Rare use instrument
+- 4–6% commission
+- Three-party agreement
+- Rare financial instrument
 
-Risk type: Financial risk (strictly controlled)
-
----
-
-# Risk Policy (Foundational Rule)
-
-Premium Guarantee must:
-
-- Never be automatic
-- Always be manually approved
-- Be limited by exposure cap
-- Maintain reserve coverage
-- Be treated as high-risk financial instrument
+Risk: Financial (strictly controlled)
 
 ---
 
 # Current Phase
 
-Phase 4 – Database integration complete
-Wholesale v1 (lot-based model) defined
-Used Retail moderation defined
-Premium Guarantee logically finalized (future implementation)
+Phase 5 – Database extended:
+- Wholesale v1 implemented
+- Promotion module implemented
+- Used moderation defined
+Premium defined (implementation future phase)

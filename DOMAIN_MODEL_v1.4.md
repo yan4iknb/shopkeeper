@@ -1,4 +1,4 @@
-# SHOPKEEPER DOMAIN MODEL v1.3
+# SHOPKEEPER DOMAIN MODEL v1.4
 
 Last Update: 01.03.2026
 
@@ -9,8 +9,10 @@ Last Update: 01.03.2026
 Hybrid architecture:
 
 Retail = Escrow-controlled marketplace  
-Wholesale = Public B2B lot exchange (no escrow)  
-Wholesale Premium = Manual Escrow Guarantee Module
+Wholesale = Public B2B lot exchange  
+Wholesale Premium = Manual Escrow Guarantee Module  
+
+Promotion Layer = Paid visibility engine (Retail + Wholesale)
 
 ---
 
@@ -62,9 +64,9 @@ ProductImage:
 
 Rules:
 - Used retail must contain at least one image
+- Used retail requires moderation before activation
 - maxQuantityPerOrder required
 - No public stock tracking
-- Used retail requires moderation approval before activation
 
 ---
 
@@ -76,7 +78,7 @@ WholesaleOffer:
 - modelName
 - condition: new | used
 - location
-- quantityAvailable (required, > 0)
+- quantityAvailable (>0)
 - description
 - expiresAt (createdAt + 72h)
 - status: active | expired | suspended
@@ -84,42 +86,64 @@ WholesaleOffer:
 - updatedAt
 
 WholesalePriceTier:
-- id: UUID
+- id
 - wholesaleOfferId
 - minQuantity
 - pricePerUnit
 
 Rules:
-- Wholesale offers auto-expire after 72 hours
-- No manual admin confirmation required
-- Publicly visible without login
-- No escrow support
+- Auto-expire after 72h
+- Public visibility (no login required)
+- No escrow
 - No stock reservation
-- quantityAvailable required
-- Max 3 price tiers per offer
-- minQuantity must:
-    - be > 0
-    - be ≤ quantityAvailable
-    - be strictly increasing
-- pricePerUnit must:
-    - be > 0
-    - decrease or remain equal as quantity increases
+- Max 3 price tiers
+- minQuantity must be increasing
+- minQuantity ≤ quantityAvailable
+- pricePerUnit must decrease or stay equal
 
-Wholesale model = dynamic lot-based exchange.
-Seller page acts as structured price list.
+Wholesale model = dynamic lot-based exchange  
+Seller page = structured price list
 
 ---
 
-# Wholesale Premium Guarantee Module
+# Promotion Module (Retail + Wholesale)
 
-Premium Guarantee is:
+Promotion:
+- id
+- entityType: product | wholesale
+- entityId
+- sellerId
+- promotionType:
+    - boost
+    - featured
+    - pinned
+- startsAt
+- expiresAt
+- isActive
+- createdAt
 
+Rules:
+- Promotion does NOT modify original entity data
+- Promotion affects visibility & sorting only
+- Expired promotion must not affect ranking
+- Multiple promotions allowed historically
+- Active promotion must be time-valid (now between startsAt and expiresAt)
+
+Sorting logic example:
+1. Active promotions first
+2. Then by promotionType priority
+3. Then by createdAt DESC
+
+---
+
+# Wholesale Premium Guarantee
+
+Premium is:
 - Manual
 - Admin-approved
-- Limited by exposure
-- High-risk controlled
+- Exposure-limited
 - Commission-based (4–6%)
-- Rare instrument (not mass-enabled)
+- Rare financial instrument
 
 WholesaleGuaranteeRequest:
 - id
@@ -128,10 +152,7 @@ WholesaleGuaranteeRequest:
 - sellerId
 - requestedAmount
 - proposedFeePercent
-- status:
-    - pending_review
-    - approved
-    - rejected
+- status: pending_review | approved | rejected
 
 WholesaleEscrowDeal:
 - id
@@ -153,10 +174,9 @@ WholesaleEscrowDeal:
 
 Rules:
 - Only trusted sellers eligible
-- Each deal manually approved by admin
-- Exposure limits must be enforced
-- Commission retained as platform income
-- Platform acts as agent, not seller
+- Manual admin approval required
+- Exposure limits enforced
+- Platform acts as agent
 - Not automatic
 - Not default
 
@@ -179,19 +199,19 @@ Order:
     - completed
 
 Rules:
-- Escrow applies only to Retail products
-- Wholesale Standard bypasses Order system
-- Wholesale Premium uses separate EscrowDeal entity
+- Escrow applies only to Retail
+- Wholesale Standard bypasses Order
+- Premium uses separate EscrowDeal
 
 ---
 
 # System Invariants
 
 1. Retail products must define maxQuantityPerOrder
-2. Used retail requires at least one image
-3. Used retail requires moderation before activation
-4. Wholesale offers auto-expire after 72h
-5. Standard Wholesale has no escrow integration
-6. Premium Guarantee requires manual admin approval
-7. Exposure limits must be enforced
+2. Used retail requires image + moderation
+3. Wholesale auto-expires after 72h
+4. Standard Wholesale has no escrow
+5. Premium requires manual approval
+6. Exposure limits enforced
+7. Promotion never alters core entity data
 8. Admin override always possible

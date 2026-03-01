@@ -133,3 +133,22 @@ model Payment {
   releasedAt DateTime?
   refundedAt DateTime?
 }
+
+
+model Promotion {
+  id          String        @id @default(uuid())
+
+  entityType  String        // "product" | "wholesale"
+  entityId    String        // id Product или WholesaleOffer
+  sellerId    String
+  seller      User          @relation(fields: [sellerId], references: [id])
+
+  promotionType PromotionType
+
+  startsAt    DateTime
+  expiresAt   DateTime
+
+  isActive    Boolean       @default(true)
+
+  createdAt   DateTime      @default(now())
+}
