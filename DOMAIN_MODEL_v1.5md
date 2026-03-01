@@ -19,12 +19,14 @@ Notification Layer = Event-driven user engagement system
 # Roles
 
 UserRole:
+
 - buyer
 - seller
 - trusted_seller
 - admin
 
 TrustLevel:
+
 - normal
 - trusted
 - suspended
@@ -36,37 +38,59 @@ Only trusted sellers may be eligible for Premium Guarantee.
 # Product (Retail)
 
 Product:
-- id
-- sellerId
-- type: retail
+
+- id: UUID
+- sellerId: User.id
+- type: retail (system-defined)
 - condition: new | used
-- title
-- price
-- currency
-- maxQuantityPerOrder
-- isPreSalePrepared
-- status
+- title: string
+- price: float
+- currency: string
+- maxQuantityPerOrder: int (required, DB default = 1)
+- status: draft | active
 - createdAt
 - updatedAt
 
 ProductImage:
+
 - id
 - productId
 - url
 - isPrimary
 - createdAt
 
-Rules:
-- Used retail must contain at least one image
-- Used retail requires moderation
-- maxQuantityPerOrder required
-- No public stock tracking
+---
+
+## Retail Business Rules (v1 Stable)
+
+1. Product creation allowed only for role = seller
+2. price must be > 0
+3. currency required
+4. condition allowed values: new | used
+5. maxQuantityPerOrder required
+6. Default status on creation = draft
+7. Publication must be separate use-case (future: publishProduct)
+8. Used retail requires:
+   - at least one image
+   - moderation before activation
+
+---
+
+## Architectural Rule
+
+Retail creation flow:
+
+Service → Repository → Prisma → Database
+
+Business validation exists only in Service layer.  
+Repository contains no business logic.
 
 ---
 
 # Wholesale (Public Lot Exchange)
 
 WholesaleOffer:
+
 - id
 - sellerId
 - modelName
@@ -80,12 +104,14 @@ WholesaleOffer:
 - updatedAt
 
 WholesalePriceTier:
+
 - id
 - wholesaleOfferId
 - minQuantity
 - pricePerUnit
 
 Rules:
+
 - Auto-expire after 72h
 - Public visibility
 - No escrow
@@ -100,6 +126,7 @@ Rules:
 # Promotion Module
 
 Promotion:
+
 - id
 - entityType (product | wholesale)
 - entityId
@@ -111,6 +138,7 @@ Promotion:
 - createdAt
 
 Rules:
+
 - Does not modify entity data
 - Affects sorting only
 - Expired promotions ignored
@@ -121,13 +149,14 @@ Rules:
 # Notification & Push Module
 
 Notification:
+
 - id
 - userId
 - type:
-    - retail_order_update
-    - wholesale_new_lot
-    - premium_update
-    - seller_new_offer
+  - retail_order_update
+  - wholesale_new_lot
+  - premium_update
+  - seller_new_offer
 - title
 - message
 - relatedEntityType
@@ -136,6 +165,7 @@ Notification:
 - createdAt
 
 PushSubscription:
+
 - id
 - userId
 - endpoint
@@ -145,6 +175,7 @@ PushSubscription:
 - createdAt
 
 UserNotificationSettings:
+
 - userId
 - retailOrderUpdates
 - wholesaleNewLots
@@ -153,46 +184,28 @@ UserNotificationSettings:
 - sellerSubscriptionsEnabled
 
 ModelSubscription:
+
 - id
 - userId
 - modelName
 - createdAt
 
 SellerSubscription:
+
 - id
 - userId
 - sellerId
 - createdAt
-
-Rules:
-- Notifications are event-driven
-- Push is optional per user
-- Users control subscription preferences
-- Promotion does not trigger notifications automatically
-- Notification history retained
-
----
-
-# Wholesale Premium
-
-Manual escrow module (unchanged)
-
----
-
-# Order (Retail Only)
-
-Escrow-based system (unchanged)
 
 ---
 
 # System Invariants
 
 1. Retail requires maxQuantityPerOrder
-2. Used retail requires image + moderation
-3. Wholesale auto-expires after 72h
-4. Standard Wholesale has no escrow
-5. Premium requires manual approval
-6. Exposure limits enforced
-7. Promotion never alters entity data
-8. Notification system must respect user settings
-9. Admin override always possible
+2. Retail default status = draft
+3. Used retail requires image + moderation
+4. Wholesale auto-expires after 72h
+5. Standard Wholesale has no escrow
+6. Promotion never alters entity data
+7. Notification system must respect user settings
+8. Admin override always possible

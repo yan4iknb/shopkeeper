@@ -16,98 +16,78 @@ Notification system drives engagement
 
 ---
 
-# Global Structure
+# Backend Infrastructure Stabilized
 
-- Retail (Escrow)
-- Wholesale (Public Lot Exchange)
-- Wholesale Premium (Manual Escrow)
-- Promotion Layer
-- Notification & Push Layer
+### Stack
 
----
+- Node 20
+- Yarn
+- Prisma 6.19.2
+- PostgreSQL
+- TypeScript
+- tsx runner
 
-# Used Retail
+### Prisma Configuration
 
-- Escrow-controlled
-- Mandatory image
-- Moderation required
-- maxQuantityPerOrder required
-
-Risk: Quality risk
-
----
-
-# Wholesale (Standard)
-
-- Public visibility
-- quantityAvailable required
-- Up to 3 price tiers
-- 72h expiration
-- No escrow
-- No stock reservation
-
-Risk: Counterparty risk
+- Prisma 6 (stable engine)
+- No adapter
+- No prisma.config.ts
+- Binary engine
+- Singleton Prisma client
+- Clean migration history
 
 ---
 
-# Promotion Layer
-
-- boost / featured / pinned
-- Time-limited
-- Visibility control
-- Sorting influence only
-
-Monetization path:
-Phase 1 – Manual
-Phase 2 – Paid boost
-Phase 3 – Automated purchase
-
----
-
-# Notification & Push Layer
-
-Implemented:
-- Notification entity
-- PushSubscription
-- ModelSubscription
-- SellerSubscription
-- UserNotificationSettings
+# Retail v1 Implemented
 
 Architecture:
-Event → NotificationService → 
-  - Save notification
-  - Send push
-  - Respect user settings
 
-Future:
-- Analytics
-- Batch sending
-- Admin notification control
+Prisma → RetailRepository → RetailService → Script
+
+Implemented:
+
+✔ createRetailProduct()  
+✔ seller validation  
+✔ price validation  
+✔ condition validation  
+✔ mandatory maxQuantityPerOrder  
+✔ status = draft on creation  
+✔ ProductImage relation working  
+✔ Migration with default value handling  
+✔ Stable DB schema
 
 ---
 
-# Wholesale Premium
+# System State
 
-- Trusted sellers only
-- Manual approval
-- Exposure control
-- 4–6% commission
-- Rare instrument
+Database synced  
+Migrations clean  
+Service layer introduced  
+Business validation separated from persistence  
+No direct DB calls from script
 
-Risk: Financial
+System ready for:
+
+- publishProduct use-case
+- AuditLog integration
+- Order flow expansion
+- Event-driven notification binding
 
 ---
 
 # Current Phase
 
-Phase 6 – Platform Infrastructure Stabilized:
+Phase 7 – Backend Architecture Stabilized
 
-✔ Wholesale v1
-✔ Promotion system
-✔ Notification system
-✔ Push-ready architecture
-✔ Used moderation defined
+✔ Prisma 6 stable configuration  
+✔ Service layer introduced  
+✔ Retail v1 business validation implemented  
+✔ Migration discipline established  
+✔ Separation of concerns enforced
 
-Next Phase:
-Service layer implementation
-Event-driven architecture
+Next Logical Step:
+
+- Retail publish flow
+- Audit logging
+- Order lifecycle logic
+- Event bus introduction

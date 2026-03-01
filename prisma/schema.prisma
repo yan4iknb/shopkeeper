@@ -4,6 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 //////////////////////////
@@ -78,40 +79,41 @@ model User {
   trustLevel TrustLevel @default(normal)
   isActive   Boolean    @default(true)
 
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  products            Product[]
-  ordersBuyer         Order[]   @relation("BuyerOrders")
-  ordersSeller        Order[]   @relation("SellerOrders")
-  wholesaleOffers     WholesaleOffer[]
-  promotions          Promotion[]
-  notifications       Notification[]
-  pushSubscriptions   PushSubscription[]
-  modelSubscriptions  ModelSubscription[]
-  sellerSubscriptions SellerSubscription[]
+  products             Product[]
+  ordersBuyer          Order[]                   @relation("BuyerOrders")
+  ordersSeller         Order[]                   @relation("SellerOrders")
+  wholesaleOffers      WholesaleOffer[]
+  promotions           Promotion[]
+  notifications        Notification[]
+  pushSubscriptions    PushSubscription[]
+  modelSubscriptions   ModelSubscription[]
+  sellerSubscriptions  SellerSubscription[]      @relation("SellerSubUser")
+  followers            SellerSubscription[]      @relation("SellerSubTarget")
   notificationSettings UserNotificationSettings?
 }
 
 model AuditLog {
-  id          String   @id @default(uuid())
-  entityType  String
-  entityId    String
-  action      String
-  actorId     String?
-  metadata    Json?
-  createdAt   DateTime @default(now())
+  id         String   @id @default(uuid())
+  entityType String
+  entityId   String
+  action     String
+  actorId    String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
 }
 
 model FinancialLedger {
-  id          String   @id @default(uuid())
+  id          String          @id @default(uuid())
   relatedType String
   relatedId   String
   operation   LedgerOperation
   amount      Float
   currency    String
   actorId     String?
-  createdAt   DateTime @default(now())
+  createdAt   DateTime        @default(now())
 }
 
 //////////////////////////
@@ -119,37 +121,38 @@ model FinancialLedger {
 //////////////////////////
 
 model Product {
-  id        String   @id @default(uuid())
-  sellerId  String
-  seller    User     @relation(fields: [sellerId], references: [id])
+  id       String @id @default(uuid())
+  sellerId String
+  seller   User   @relation(fields: [sellerId], references: [id])
 
-  type      String
-  condition String
-  title     String
-  price     Float
-  currency  String
-  status    String
+  type                String
+  condition           String
+  title               String
+  price               Float
+  currency            String
+  maxQuantityPerOrder Int    @default(1)
+  status              String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  images    ProductImage[]
-  orders    Order[]
+  images ProductImage[]
+  orders Order[]
 }
 
 model ProductImage {
-  id        String   @id @default(uuid())
+  id        String  @id @default(uuid())
   productId String
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   url       String
-  isPrimary Boolean  @default(false)
+  isPrimary Boolean @default(false)
 
   createdAt DateTime @default(now())
 }
 
 model Order {
-  id        String      @id @default(uuid())
+  id        String @id @default(uuid())
   buyerId   String
   sellerId  String
   productId String
@@ -159,20 +162,20 @@ model Order {
   product Product @relation(fields: [productId], references: [id])
 
   status    OrderStatus
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
 
-  payment   Payment?
+  payment Payment?
 }
 
 model Payment {
-  id        String        @id @default(uuid())
-  orderId   String        @unique
-  order     Order         @relation(fields: [orderId], references: [id])
+  id      String @id @default(uuid())
+  orderId String @unique
+  order   Order  @relation(fields: [orderId], references: [id])
 
-  amount    Float
-  currency  String
-  status    PaymentStatus
+  amount   Float
+  currency String
+  status   PaymentStatus
 
   frozenAt   DateTime?
   releasedAt DateTime?
@@ -184,9 +187,9 @@ model Payment {
 //////////////////////////
 
 model WholesaleOffer {
-  id                String               @id @default(uuid())
-  sellerId          String
-  seller            User                 @relation(fields: [sellerId], references: [id])
+  id       String @id @default(uuid())
+  sellerId String
+  seller   User   @relation(fields: [sellerId], references: [id])
 
   modelName         String
   condition         String
@@ -194,22 +197,22 @@ model WholesaleOffer {
   quantityAvailable Int
   description       String?
 
-  expiresAt         DateTime
-  status            WholesaleOfferStatus @default(active)
+  expiresAt DateTime
+  status    WholesaleOfferStatus @default(active)
 
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  priceTiers        WholesalePriceTier[]
+  priceTiers WholesalePriceTier[]
 }
 
 model WholesalePriceTier {
-  id               String          @id @default(uuid())
+  id               String         @id @default(uuid())
   wholesaleOfferId String
-  wholesaleOffer   WholesaleOffer  @relation(fields: [wholesaleOfferId], references: [id], onDelete: Cascade)
+  wholesaleOffer   WholesaleOffer @relation(fields: [wholesaleOfferId], references: [id], onDelete: Cascade)
 
-  minQuantity      Int
-  pricePerUnit     Float
+  minQuantity  Int
+  pricePerUnit Float
 }
 
 //////////////////////////
@@ -217,18 +220,18 @@ model WholesalePriceTier {
 //////////////////////////
 
 model Promotion {
-  id            String        @id @default(uuid())
-  entityType    String
-  entityId      String
-  sellerId      String
-  seller        User          @relation(fields: [sellerId], references: [id])
+  id         String @id @default(uuid())
+  entityType String
+  entityId   String
+  sellerId   String
+  seller     User   @relation(fields: [sellerId], references: [id])
 
   promotionType PromotionType
   startsAt      DateTime
   expiresAt     DateTime
   isActive      Boolean       @default(true)
 
-  createdAt     DateTime      @default(now())
+  createdAt DateTime @default(now())
 }
 
 //////////////////////////
@@ -236,64 +239,64 @@ model Promotion {
 //////////////////////////
 
 model Notification {
-  id                 String            @id @default(uuid())
-  userId             String
-  user               User              @relation(fields: [userId], references: [id])
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
 
-  type               NotificationType
-  title              String
-  message            String
+  type    NotificationType
+  title   String
+  message String
 
-  relatedEntityType  String?
-  relatedEntityId    String?
+  relatedEntityType String?
+  relatedEntityId   String?
 
-  isRead             Boolean           @default(false)
-  createdAt          DateTime          @default(now())
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
 }
 
 model PushSubscription {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
 
-  endpoint  String
-  p256dh    String
-  auth      String
+  endpoint   String
+  p256dh     String
+  auth       String
   deviceType String
 
   createdAt DateTime @default(now())
 }
 
 model UserNotificationSettings {
-  id                        String   @id @default(uuid())
-  userId                    String   @unique
-  user                      User     @relation(fields: [userId], references: [id])
+  id     String @id @default(uuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
 
-  retailOrderUpdates        Boolean  @default(true)
-  wholesaleNewLots          Boolean  @default(true)
-  premiumDealUpdates        Boolean  @default(true)
-  modelSubscriptionsEnabled Boolean  @default(true)
+  retailOrderUpdates         Boolean @default(true)
+  wholesaleNewLots           Boolean @default(true)
+  premiumDealUpdates         Boolean @default(true)
+  modelSubscriptionsEnabled  Boolean @default(true)
   sellerSubscriptionsEnabled Boolean @default(true)
 
-  createdAt                 DateTime @default(now())
+  createdAt DateTime @default(now())
 }
 
 model ModelSubscription {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
 
   modelName String
   createdAt DateTime @default(now())
 }
 
 model SellerSubscription {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation("SellerSubUser", fields: [userId], references: [id])
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation("SellerSubUser", fields: [userId], references: [id])
 
-  sellerId  String
-  seller    User     @relation("SellerSubTarget", fields: [sellerId], references: [id])
+  sellerId String
+  seller   User   @relation("SellerSubTarget", fields: [sellerId], references: [id])
 
   createdAt DateTime @default(now())
 }
