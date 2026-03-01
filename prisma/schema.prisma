@@ -1,32 +1,14 @@
 generator client {
-  provider   = "prisma-client-js"
-  engineType = "binary"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
 }
 
-model AuditLog {
-  id          String   @id @default(uuid())
-  entityType  String
-  entityId    String
-  action      String
-  actorId     String?
-  metadata    Json?
-  createdAt   DateTime @default(now())
-}
-
-model FinancialLedger {
-  id            String   @id @default(uuid())
-  relatedType   String
-  relatedId     String
-  operation     LedgerOperation
-  amount        Float
-  currency      String
-  actorId       String?
-  createdAt     DateTime @default(now())
-}
+//////////////////////////
+// ENUMS
+//////////////////////////
 
 enum UserRole {
   buyer
@@ -66,6 +48,29 @@ enum LedgerOperation {
   fee
 }
 
+enum WholesaleOfferStatus {
+  active
+  expired
+  suspended
+}
+
+enum PromotionType {
+  boost
+  featured
+  pinned
+}
+
+enum NotificationType {
+  retail_order_update
+  wholesale_new_lot
+  premium_update
+  seller_new_offer
+}
+
+//////////////////////////
+// CORE
+//////////////////////////
+
 model User {
   id         String     @id @default(uuid())
   email      String     @unique
@@ -76,10 +81,42 @@ model User {
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
 
-  products     Product[]
-  ordersBuyer  Order[]   @relation("BuyerOrders")
-  ordersSeller Order[]   @relation("SellerOrders")
+  products            Product[]
+  ordersBuyer         Order[]   @relation("BuyerOrders")
+  ordersSeller        Order[]   @relation("SellerOrders")
+  wholesaleOffers     WholesaleOffer[]
+  promotions          Promotion[]
+  notifications       Notification[]
+  pushSubscriptions   PushSubscription[]
+  modelSubscriptions  ModelSubscription[]
+  sellerSubscriptions SellerSubscription[]
+  notificationSettings UserNotificationSettings?
 }
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  entityType  String
+  entityId    String
+  action      String
+  actorId     String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+}
+
+model FinancialLedger {
+  id          String   @id @default(uuid())
+  relatedType String
+  relatedId   String
+  operation   LedgerOperation
+  amount      Float
+  currency    String
+  actorId     String?
+  createdAt   DateTime @default(now())
+}
+
+//////////////////////////
+// RETAIL
+//////////////////////////
 
 model Product {
   id        String   @id @default(uuid())
@@ -88,32 +125,40 @@ model Product {
 
   type      String
   condition String
-
   title     String
   price     Float
   currency  String
-
   status    String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  images    ProductImage[]
   orders    Order[]
+}
+
+model ProductImage {
+  id        String   @id @default(uuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  url       String
+  isPrimary Boolean  @default(false)
+
+  createdAt DateTime @default(now())
 }
 
 model Order {
   id        String      @id @default(uuid())
-
   buyerId   String
   sellerId  String
   productId String
 
-  buyer     User        @relation("BuyerOrders", fields: [buyerId], references: [id])
-  seller    User        @relation("SellerOrders", fields: [sellerId], references: [id])
-  product   Product     @relation(fields: [productId], references: [id])
+  buyer   User    @relation("BuyerOrders", fields: [buyerId], references: [id])
+  seller  User    @relation("SellerOrders", fields: [sellerId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
 
   status    OrderStatus
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -134,21 +179,121 @@ model Payment {
   refundedAt DateTime?
 }
 
+//////////////////////////
+// WHOLESALE
+//////////////////////////
+
+model WholesaleOffer {
+  id                String               @id @default(uuid())
+  sellerId          String
+  seller            User                 @relation(fields: [sellerId], references: [id])
+
+  modelName         String
+  condition         String
+  location          String
+  quantityAvailable Int
+  description       String?
+
+  expiresAt         DateTime
+  status            WholesaleOfferStatus @default(active)
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  priceTiers        WholesalePriceTier[]
+}
+
+model WholesalePriceTier {
+  id               String          @id @default(uuid())
+  wholesaleOfferId String
+  wholesaleOffer   WholesaleOffer  @relation(fields: [wholesaleOfferId], references: [id], onDelete: Cascade)
+
+  minQuantity      Int
+  pricePerUnit     Float
+}
+
+//////////////////////////
+// PROMOTION
+//////////////////////////
 
 model Promotion {
-  id          String        @id @default(uuid())
-
-  entityType  String        // "product" | "wholesale"
-  entityId    String        // id Product или WholesaleOffer
-  sellerId    String
-  seller      User          @relation(fields: [sellerId], references: [id])
+  id            String        @id @default(uuid())
+  entityType    String
+  entityId      String
+  sellerId      String
+  seller        User          @relation(fields: [sellerId], references: [id])
 
   promotionType PromotionType
+  startsAt      DateTime
+  expiresAt     DateTime
+  isActive      Boolean       @default(true)
 
-  startsAt    DateTime
-  expiresAt   DateTime
+  createdAt     DateTime      @default(now())
+}
 
-  isActive    Boolean       @default(true)
+//////////////////////////
+// NOTIFICATIONS
+//////////////////////////
 
-  createdAt   DateTime      @default(now())
+model Notification {
+  id                 String            @id @default(uuid())
+  userId             String
+  user               User              @relation(fields: [userId], references: [id])
+
+  type               NotificationType
+  title              String
+  message            String
+
+  relatedEntityType  String?
+  relatedEntityId    String?
+
+  isRead             Boolean           @default(false)
+  createdAt          DateTime          @default(now())
+}
+
+model PushSubscription {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+
+  endpoint  String
+  p256dh    String
+  auth      String
+  deviceType String
+
+  createdAt DateTime @default(now())
+}
+
+model UserNotificationSettings {
+  id                        String   @id @default(uuid())
+  userId                    String   @unique
+  user                      User     @relation(fields: [userId], references: [id])
+
+  retailOrderUpdates        Boolean  @default(true)
+  wholesaleNewLots          Boolean  @default(true)
+  premiumDealUpdates        Boolean  @default(true)
+  modelSubscriptionsEnabled Boolean  @default(true)
+  sellerSubscriptionsEnabled Boolean @default(true)
+
+  createdAt                 DateTime @default(now())
+}
+
+model ModelSubscription {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+
+  modelName String
+  createdAt DateTime @default(now())
+}
+
+model SellerSubscription {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation("SellerSubUser", fields: [userId], references: [id])
+
+  sellerId  String
+  seller    User     @relation("SellerSubTarget", fields: [sellerId], references: [id])
+
+  createdAt DateTime @default(now())
 }

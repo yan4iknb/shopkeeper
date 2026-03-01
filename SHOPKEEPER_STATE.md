@@ -11,16 +11,18 @@ High-tech hybrid marketplace:
 Retail builds trust  
 Wholesale builds liquidity  
 Premium monetizes selective B2B trust  
-Promotion monetizes visibility
+Promotion monetizes visibility  
+Notification system drives engagement
 
 ---
 
 # Global Structure
 
-- Retail (New / Used – moderated)
+- Retail (Escrow)
 - Wholesale (Public Lot Exchange)
 - Wholesale Premium (Manual Escrow)
-- Promotion Layer (Visibility engine)
+- Promotion Layer
+- Notification & Push Layer
 
 ---
 
@@ -30,9 +32,8 @@ Promotion monetizes visibility
 - Mandatory image
 - Moderation required
 - maxQuantityPerOrder required
-- Optional pre-sale badge
 
-Risk: Quality risk (platform-controlled)
+Risk: Quality risk
 
 ---
 
@@ -44,45 +45,69 @@ Risk: Quality risk (platform-controlled)
 - 72h expiration
 - No escrow
 - No stock reservation
-- Seller page acts as price list
 
-Risk: Counterparty risk (external)
+Risk: Counterparty risk
 
 ---
 
 # Promotion Layer
 
-- Applies to Product and WholesaleOffer
 - boost / featured / pinned
 - Time-limited
-- Does not alter original data
-- Affects ranking only
-- Future monetization engine
+- Visibility control
+- Sorting influence only
 
 Monetization path:
-Phase 1 – Manual activation
+Phase 1 – Manual
 Phase 2 – Paid boost
 Phase 3 – Automated purchase
+
+---
+
+# Notification & Push Layer
+
+Implemented:
+- Notification entity
+- PushSubscription
+- ModelSubscription
+- SellerSubscription
+- UserNotificationSettings
+
+Architecture:
+Event → NotificationService → 
+  - Save notification
+  - Send push
+  - Respect user settings
+
+Future:
+- Analytics
+- Batch sending
+- Admin notification control
 
 ---
 
 # Wholesale Premium
 
 - Trusted sellers only
-- Manual admin approval
-- Exposure limits
+- Manual approval
+- Exposure control
 - 4–6% commission
-- Three-party agreement
-- Rare financial instrument
+- Rare instrument
 
-Risk: Financial (strictly controlled)
+Risk: Financial
 
 ---
 
 # Current Phase
 
-Phase 5 – Database extended:
-- Wholesale v1 implemented
-- Promotion module implemented
-- Used moderation defined
-Premium defined (implementation future phase)
+Phase 6 – Platform Infrastructure Stabilized:
+
+✔ Wholesale v1
+✔ Promotion system
+✔ Notification system
+✔ Push-ready architecture
+✔ Used moderation defined
+
+Next Phase:
+Service layer implementation
+Event-driven architecture

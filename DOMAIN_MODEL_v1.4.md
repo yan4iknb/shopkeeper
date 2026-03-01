@@ -1,4 +1,4 @@
-# SHOPKEEPER DOMAIN MODEL v1.4
+# SHOPKEEPER DOMAIN MODEL v1.5
 
 Last Update: 01.03.2026
 
@@ -11,8 +11,8 @@ Hybrid architecture:
 Retail = Escrow-controlled marketplace  
 Wholesale = Public B2B lot exchange  
 Wholesale Premium = Manual Escrow Guarantee Module  
-
-Promotion Layer = Paid visibility engine (Retail + Wholesale)
+Promotion Layer = Paid visibility engine  
+Notification Layer = Event-driven user engagement system
 
 ---
 
@@ -36,22 +36,16 @@ Only trusted sellers may be eligible for Premium Guarantee.
 # Product (Retail)
 
 Product:
-- id: UUID
+- id
 - sellerId
 - type: retail
 - condition: new | used
-- title_original
-- description_original
-- original_language: ru | en
-- title_ru
-- description_ru
-- title_en
-- description_en
+- title
 - price
 - currency
 - maxQuantityPerOrder
-- isPreSalePrepared (used retail only)
-- status: draft | active | suspended | archived
+- isPreSalePrepared
+- status
 - createdAt
 - updatedAt
 
@@ -64,23 +58,23 @@ ProductImage:
 
 Rules:
 - Used retail must contain at least one image
-- Used retail requires moderation before activation
+- Used retail requires moderation
 - maxQuantityPerOrder required
 - No public stock tracking
 
 ---
 
-# Wholesale Module (Standard – Public Lot Exchange)
+# Wholesale (Public Lot Exchange)
 
 WholesaleOffer:
-- id: UUID
+- id
 - sellerId
 - modelName
-- condition: new | used
+- condition
 - location
-- quantityAvailable (>0)
+- quantityAvailable
 - description
-- expiresAt (createdAt + 72h)
+- expiresAt
 - status: active | expired | suspended
 - createdAt
 - updatedAt
@@ -93,125 +87,112 @@ WholesalePriceTier:
 
 Rules:
 - Auto-expire after 72h
-- Public visibility (no login required)
+- Public visibility
 - No escrow
 - No stock reservation
 - Max 3 price tiers
-- minQuantity must be increasing
+- minQuantity increasing
 - minQuantity ≤ quantityAvailable
-- pricePerUnit must decrease or stay equal
-
-Wholesale model = dynamic lot-based exchange  
-Seller page = structured price list
+- price decreases or stays equal
 
 ---
 
-# Promotion Module (Retail + Wholesale)
+# Promotion Module
 
 Promotion:
 - id
-- entityType: product | wholesale
+- entityType (product | wholesale)
 - entityId
 - sellerId
-- promotionType:
-    - boost
-    - featured
-    - pinned
+- promotionType (boost | featured | pinned)
 - startsAt
 - expiresAt
 - isActive
 - createdAt
 
 Rules:
-- Promotion does NOT modify original entity data
-- Promotion affects visibility & sorting only
-- Expired promotion must not affect ranking
-- Multiple promotions allowed historically
-- Active promotion must be time-valid (now between startsAt and expiresAt)
-
-Sorting logic example:
-1. Active promotions first
-2. Then by promotionType priority
-3. Then by createdAt DESC
+- Does not modify entity data
+- Affects sorting only
+- Expired promotions ignored
+- Multiple historical records allowed
 
 ---
 
-# Wholesale Premium Guarantee
+# Notification & Push Module
 
-Premium is:
-- Manual
-- Admin-approved
-- Exposure-limited
-- Commission-based (4–6%)
-- Rare financial instrument
-
-WholesaleGuaranteeRequest:
+Notification:
 - id
-- wholesaleOfferId
-- buyerId
-- sellerId
-- requestedAmount
-- proposedFeePercent
-- status: pending_review | approved | rejected
+- userId
+- type:
+    - retail_order_update
+    - wholesale_new_lot
+    - premium_update
+    - seller_new_offer
+- title
+- message
+- relatedEntityType
+- relatedEntityId
+- isRead
+- createdAt
 
-WholesaleEscrowDeal:
+PushSubscription:
 - id
-- wholesaleOfferId
-- buyerId
+- userId
+- endpoint
+- p256dh
+- auth
+- deviceType
+- createdAt
+
+UserNotificationSettings:
+- userId
+- retailOrderUpdates
+- wholesaleNewLots
+- premiumDealUpdates
+- modelSubscriptionsEnabled
+- sellerSubscriptionsEnabled
+
+ModelSubscription:
+- id
+- userId
+- modelName
+- createdAt
+
+SellerSubscription:
+- id
+- userId
 - sellerId
-- amount
-- guaranteeFeePercent
-- buyerAgreementAcceptedAt
-- sellerAgreementAcceptedAt
-- status:
-    - created
-    - funds_frozen
-    - shipped
-    - delivered
-    - released
-    - disputed
-    - refunded
+- createdAt
 
 Rules:
-- Only trusted sellers eligible
-- Manual admin approval required
-- Exposure limits enforced
-- Platform acts as agent
-- Not automatic
-- Not default
+- Notifications are event-driven
+- Push is optional per user
+- Users control subscription preferences
+- Promotion does not trigger notifications automatically
+- Notification history retained
+
+---
+
+# Wholesale Premium
+
+Manual escrow module (unchanged)
 
 ---
 
 # Order (Retail Only)
 
-Order:
-- id
-- buyerId
-- sellerId
-- productId
-- status:
-    - created
-    - funds_frozen
-    - awaiting_admin_review
-    - approved
-    - rejected
-    - cancelled_by_admin
-    - completed
-
-Rules:
-- Escrow applies only to Retail
-- Wholesale Standard bypasses Order
-- Premium uses separate EscrowDeal
+Escrow-based system (unchanged)
 
 ---
 
 # System Invariants
 
-1. Retail products must define maxQuantityPerOrder
+1. Retail requires maxQuantityPerOrder
 2. Used retail requires image + moderation
 3. Wholesale auto-expires after 72h
 4. Standard Wholesale has no escrow
 5. Premium requires manual approval
 6. Exposure limits enforced
-7. Promotion never alters core entity data
-8. Admin override always possible
+7. Promotion never alters entity data
+8. Notification system must respect user settings
+9. Admin override always possible
