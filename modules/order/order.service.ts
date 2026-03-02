@@ -55,4 +55,34 @@ export class OrderService {
 
     return order
   }
+
+  async confirmOrder(orderId: string, actorId: string) {
+    // 1️⃣ Проверяем заказ
+    const order = await this.orderRepo.findById(orderId)
+    if (!order) {
+      throw new Error('Order not found')
+    }
+
+    if (order.status !== 'created') {
+      throw new Error('Order cannot be confirmed')
+    }
+
+    // 2️⃣ Только buyer может подтвердить
+    if (order.buyerId !== actorId) {
+      throw new Error('Only buyer can confirm the order')
+    }
+
+    // 3️⃣ Меняем статус
+    const updated = await this.orderRepo.updateStatus(orderId, 'funds_frozen')
+
+    // 4️⃣ Логируем
+    await this.auditRepo.create({
+      entityType: 'Order',
+      entityId: orderId,
+      action: 'ORDER_CONFIRMED_FUNDS_FROZEN',
+      actorId: actorId,
+    })
+
+    return updated
+  }
 }

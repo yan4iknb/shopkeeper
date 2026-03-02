@@ -91,3 +91,37 @@ Next Logical Step:
 - Audit logging
 - Order lifecycle logic
 - Event bus introduction
+
+---
+
+## 2026-03-02 — Retail + Order + Escrow Phase 1
+
+### Реализовано:
+
+- RetailService.createRetailProduct()
+- RetailService.publishProduct()
+- AuditLog при публикации продукта
+
+- OrderRepository
+- OrderService.createOrder()
+- OrderService.confirmOrder()
+
+### Статусы Order:
+
+created  
+→ funds_frozen
+
+### Добавлено:
+
+- maxQuantityPerOrder в Product
+- AuditLog для:
+  - PRODUCT_PUBLISHED
+  - ORDER_CREATED
+  - ORDER_CONFIRMED_FUNDS_FROZEN
+
+### Архитектурное состояние:
+
+- Repository Layer стабилен
+- Service Layer стабилен
+- Audit Trail активен
+- Escrow-механика начата
