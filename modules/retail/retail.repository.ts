@@ -39,4 +39,10 @@ export class RetailRepository {
       orderBy: { createdAt: 'desc' },
     })
   }
+  async updateStatus(id: string, status: string) {
+    return prisma.product.update({
+      where: { id },
+      data: { status },
+    })
+  }
 }

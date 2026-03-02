@@ -1,3 +1,5 @@
+import { AuditRepository } from '../audit/audit.repository'
+import { UserRepository } from '../user/user.repository'
 import { prisma } from '../../infrastructure/db/prisma'
 import { RetailRepository } from './retail.repository'
 
@@ -11,7 +13,11 @@ type CreateRetailProductInput = {
 }
 
 export class RetailService {
-  private retailRepository = new RetailRepository()
+  constructor(
+    private repo: RetailRepository,
+    private userRepo: UserRepository,
+    private auditRepo: AuditRepository,
+  ) {}
 
   async createRetailProduct(data: CreateRetailProductInput) {
     // 1️⃣ Проверяем продавца
@@ -48,7 +54,7 @@ export class RetailService {
     }
 
     // 6️⃣ Создаём продукт со статусом draft
-    const product = await this.retailRepository.createProduct({
+    const product = await this.repo.createProduct({
       sellerId: data.sellerId,
       title: data.title,
       condition: data.condition,
@@ -62,5 +68,46 @@ export class RetailService {
     // await prisma.auditLog.create(...)
 
     return product
+  }
+
+  async publishProduct(productId: string, actorId: string) {
+    const product = await this.repo.findById(productId)
+    if (!product) {
+      throw new Error('Product not found')
+    }
+
+    const actor = await this.userRepo.findById(actorId)
+    if (!actor) {
+      throw new Error('Actor not found')
+    }
+
+    // Проверка прав
+    const isOwner = product.sellerId === actorId
+    const isAdmin = actor.role === 'admin'
+
+    if (!isOwner && !isAdmin) {
+      throw new Error('No permission to publish this product')
+    }
+
+    // Бизнес-валидация
+    if (!product.title) throw new Error('Title required')
+    if (product.price <= 0) throw new Error('Invalid price')
+    if (!product.currency) throw new Error('Currency required')
+    if (product.maxQuantityPerOrder <= 0) throw new Error('Invalid maxQuantityPerOrder')
+
+    if (product.condition === 'used' && product.images.length === 0) {
+      throw new Error('Used product requires at least one image')
+    }
+
+    const updated = await this.repo.updateStatus(productId, 'active')
+
+    await this.auditRepo.create({
+      entityType: 'Product',
+      entityId: productId,
+      action: 'PRODUCT_PUBLISHED',
+      actorId: actorId,
+    })
+
+    return updated
   }
 }

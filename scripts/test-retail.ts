@@ -1,12 +1,14 @@
-import { RetailService } from '../modules/retail/retail.service'
-console.log('DATABASE_URL:', process.env.DATABASE_URL)
 import 'dotenv/config'
+
+import { RetailService } from '../modules/retail/retail.service'
 import { RetailRepository } from '../modules/retail/retail.repository'
+import { UserRepository } from '../modules/user/user.repository'
 import { prisma } from '../infrastructure/db/prisma'
+import { AuditRepository } from '../modules/audit/audit.repository'
+
+console.log('DATABASE_URL:', process.env.DATABASE_URL)
 
 async function main() {
-  const retailRepo = new RetailRepository()
-
   // 1️⃣ Найдём любого пользователя (seller)
   // Создаём seller, если его нет
   let seller = await prisma.user.findFirst({
@@ -25,7 +27,11 @@ async function main() {
     console.log('👤 Создан seller:', seller)
   }
 
-  const retailService = new RetailService()
+  const retailRepo = new RetailRepository()
+  const userRepo = new UserRepository()
+  const auditRepo = new AuditRepository()
+
+  const retailService = new RetailService(retailRepo, userRepo, auditRepo)
 
   // 2️⃣ Создаём продукт через Service
   const product = await retailService.createRetailProduct({
@@ -45,7 +51,38 @@ async function main() {
   // 4️⃣ Список активных
   const activeList = await retailRepo.listActive()
   console.log('📦 Активные продукты:', activeList.length)
+  // 5️⃣ Публикуем продукт
+  const published = await retailService.publishProduct(product.id, seller.id)
+
+  console.log('🚀 Опубликован:', published)
+
+  // 6️⃣ Создаём покупателя если нет
+  let buyer = await prisma.user.findFirst({
+    where: { role: 'buyer' },
+  })
+
+  if (!buyer) {
+    buyer = await prisma.user.create({
+      data: {
+        email: 'buyer@shopkeeper.test',
+        role: 'buyer',
+        trustLevel: 'normal',
+      },
+    })
+    console.log('👤 Создан buyer:', buyer)
+  }
+
+  const orderRepo = new OrderRepository()
+  const orderService = new OrderService(orderRepo, retailRepo, userRepo, auditRepo)
+
+  // 7️⃣ Создаём заказ
+  const order = await orderService.createOrder(published.id, buyer.id)
+
+  console.log('🛒 Заказ создан:', order)
 }
+
+import { OrderRepository } from '../modules/order/order.repository'
+import { OrderService } from '../modules/order/order.service'
 
 main()
   .catch((e) => {
