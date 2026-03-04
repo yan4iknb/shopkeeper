@@ -1,3 +1,6 @@
+const ESCROW_ACCOUNT = 'ESCROW_ACCOUNT'
+const PLATFORM_ACCOUNT = 'PLATFORM_ACCOUNT'
+
 import 'dotenv/config'
 
 import { RetailService } from '../modules/retail/retail.service'
@@ -7,6 +10,8 @@ import { prisma } from '../infrastructure/db/prisma'
 import { AuditRepository } from '../modules/audit/audit.repository'
 
 console.log('DATABASE_URL:', process.env.DATABASE_URL)
+
+const ESCROW_USER_ID = 'ESCROW_ACCOUNT'
 
 async function main() {
   // 1️⃣ Найдём любого пользователя (seller)

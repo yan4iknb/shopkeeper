@@ -1,3 +1,5 @@
+;```ts
+import { LedgerService } from '../ledger/ledger.service'
 import { OrderRepository } from './order.repository'
 import { RetailRepository } from '../retail/retail.repository'
 import { UserRepository } from '../user/user.repository'
@@ -9,11 +11,13 @@ export class OrderService {
     private retailRepo: RetailRepository,
     private userRepo: UserRepository,
     private auditRepo: AuditRepository,
+    private ledgerService: LedgerService,
   ) {}
 
   async createOrder(productId: string, buyerId: string) {
     // 1️⃣ Проверяем продукт
     const product = await this.retailRepo.findById(productId)
+
     if (!product) {
       throw new Error('Product not found')
     }
@@ -24,6 +28,7 @@ export class OrderService {
 
     // 2️⃣ Проверяем покупателя
     const buyer = await this.userRepo.findById(buyerId)
+
     if (!buyer) {
       throw new Error('Buyer not found')
     }
@@ -57,8 +62,10 @@ export class OrderService {
   }
 
   async confirmOrder(orderId: string, actorId: string) {
+
     // 1️⃣ Проверяем заказ
     const order = await this.orderRepo.findById(orderId)
+
     if (!order) {
       throw new Error('Order not found')
     }
@@ -73,9 +80,21 @@ export class OrderService {
     }
 
     // 3️⃣ Меняем статус
-    const updated = await this.orderRepo.updateStatus(orderId, 'funds_frozen')
+    const updated = await this.orderRepo.updateStatus(
+      orderId,
+      'funds_frozen'
+    )
 
-    // 4️⃣ Логируем
+    // 4️⃣ Замораживаем деньги (ledger + wallet)
+    await this.ledgerService.freezeFunds(
+      order.buyerId,
+      order.id,
+      order.product.price,
+      order.product.currency,
+      'ESCROW_ACCOUNT'
+    )
+
+    // 5️⃣ Логируем
     await this.auditRepo.create({
       entityType: 'Order',
       entityId: orderId,
@@ -85,4 +104,56 @@ export class OrderService {
 
     return updated
   }
+
+  async completeOrder(orderId: string, actorId: string) {
+
+    // 1️⃣ Проверяем заказ
+    const order = await this.orderRepo.findById(orderId)
+
+    if (!order) {
+      throw new Error('Order not found')
+    }
+
+    if (order.status !== 'funds_frozen') {
+      throw new Error('Order cannot be completed')
+    }
+
+    // 2️⃣ Проверяем пользователя
+    const actor = await this.userRepo.findById(actorId)
+
+    if (!actor) {
+      throw new Error('Actor not found')
+    }
+
+    if (actor.role !== 'admin') {
+      throw new Error('Only admin can complete order')
+    }
+
+    // 3️⃣ Меняем статус
+    const updated = await this.orderRepo.updateStatus(
+      orderId,
+      'completed'
+    )
+
+    // 4️⃣ Переводим деньги (escrow → seller + platform)
+    await this.ledgerService.releaseFunds(
+      order.sellerId,
+      order.id,
+      order.product.price,
+      order.product.currency,
+      'ESCROW_ACCOUNT',
+      'PLATFORM_ACCOUNT'
+    )
+
+    // 5️⃣ Логируем
+    await this.auditRepo.create({
+      entityType: 'Order',
+      entityId: orderId,
+      action: 'ORDER_COMPLETED',
+      actorId: actorId,
+    })
+
+    return updated
+  }
 }
+```

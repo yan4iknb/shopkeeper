@@ -36,4 +36,13 @@ export class OrderRepository {
       data: { status },
     })
   }
+
+  async updateStatus(id: string, status: string) {
+    return prisma.order.update({
+      where: { id },
+      data: {
+        status: status,
+      },
+    })
+  }
 }
