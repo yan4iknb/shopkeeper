@@ -6,4 +6,16 @@ export class UserRepository {
       where: { id },
     })
   }
+
+  async findByEmail(email: string) {
+    return prisma.user.findUnique({
+      where: { email },
+    })
+  }
+
+  async create(data: { email: string; role: string; trustLevel: string }) {
+    return prisma.user.create({
+      data,
+    })
+  }
 }

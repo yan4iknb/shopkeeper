@@ -1,40 +1,39 @@
 # SHOPKEEPER STATE FILE
 
-Last Update: 01.03.2026
+Last Update: 04.03.2026
 
 ---
 
-## Project Vision
+# Project Vision
 
 High-tech hybrid marketplace:
 
-Retail builds trust  
-Wholesale builds liquidity  
-Premium monetizes selective B2B trust  
-Promotion monetizes visibility  
+Retail builds trust
+Wholesale builds liquidity
+Premium monetizes selective B2B trust
+Promotion monetizes visibility
 Notification system drives engagement
 
 ---
 
 # Backend Infrastructure Stabilized
 
-### Stack
+Stack:
 
-- Node 20
-- Yarn
-- Prisma 6.19.2
-- PostgreSQL
-- TypeScript
-- tsx runner
+Node 20
+Yarn
+Prisma 6.19.2
+PostgreSQL
+TypeScript
+tsx runner
 
-### Prisma Configuration
+Prisma Configuration:
 
-- Prisma 6 (stable engine)
-- No adapter
-- No prisma.config.ts
-- Binary engine
-- Singleton Prisma client
-- Clean migration history
+Prisma 6 stable engine
+Singleton Prisma Client
+Clean migration history
+Binary engine
+Stable DB connection
 
 ---
 
@@ -46,82 +45,121 @@ Prisma → RetailRepository → RetailService → Script
 
 Implemented:
 
-✔ createRetailProduct()  
-✔ seller validation  
-✔ price validation  
-✔ condition validation  
-✔ mandatory maxQuantityPerOrder  
-✔ status = draft on creation  
-✔ ProductImage relation working  
-✔ Migration with default value handling  
-✔ Stable DB schema
+createRetailProduct()
+publishProduct()
+
+Validation:
+
+seller validation
+price validation
+condition validation
+maxQuantityPerOrder required
+
+Product lifecycle:
+
+draft → active
+
+Additional:
+
+ProductImage relation
+AuditLog integration
+
+Audit events:
+
+PRODUCT_PUBLISHED
+
+---
+
+# Order System v1 Implemented
+
+Architecture:
+
+OrderRepository → OrderService
+
+Implemented:
+
+createOrder()
+confirmOrder()
+
+Order validation:
+
+buyer role check
+cannot buy own product
+product status validation
+
+Order lifecycle:
+
+created
+
+Escrow logic started
+
+---
+
+# Escrow Ledger System
+
+Wallet system active
+
+Ledger entries:
+
+freezeFunds()
+
+Operations:
+
+Buyer Wallet
+↓
+Escrow Wallet
+
+LedgerEntry table used for double-entry accounting
+
+Audit events:
+
+ORDER_CREATED
+ORDER_CONFIRMED_FUNDS_FROZEN
 
 ---
 
 # System State
 
-Database synced  
-Migrations clean  
-Service layer introduced  
-Business validation separated from persistence  
-No direct DB calls from script
-
-System ready for:
-
-- publishProduct use-case
-- AuditLog integration
-- Order flow expansion
-- Event-driven notification binding
+Database synced
+Migrations clean
+Repository layer stable
+Service layer stable
+Audit trail active
+Escrow engine working
 
 ---
 
 # Current Phase
 
-Phase 7 – Backend Architecture Stabilized
+Phase 8 — Escrow Engine Initialization
 
-✔ Prisma 6 stable configuration  
-✔ Service layer introduced  
-✔ Retail v1 business validation implemented  
-✔ Migration discipline established  
-✔ Separation of concerns enforced
+Working:
 
-Next Logical Step:
-
-- Retail publish flow
-- Audit logging
-- Order lifecycle logic
-- Event bus introduction
+Retail publish flow
+Order creation flow
+Escrow freeze flow
+Ledger accounting entries
+Wallet balance updates
 
 ---
 
-## 2026-03-02 — Retail + Order + Escrow Phase 1
+# Next Development Targets
 
-### Реализовано:
+Order Status Machine
 
-- RetailService.createRetailProduct()
-- RetailService.publishProduct()
-- AuditLog при публикации продукта
+created
+confirmed
+funds_frozen
+completed
+cancelled
+refunded
 
-- OrderRepository
-- OrderService.createOrder()
-- OrderService.confirmOrder()
+---
 
-### Статусы Order:
+Additions planned:
 
-created  
-→ funds_frozen
-
-### Добавлено:
-
-- maxQuantityPerOrder в Product
-- AuditLog для:
-  - PRODUCT_PUBLISHED
-  - ORDER_CREATED
-  - ORDER_CONFIRMED_FUNDS_FROZEN
-
-### Архитектурное состояние:
-
-- Repository Layer стабилен
-- Service Layer стабилен
-- Audit Trail активен
-- Escrow-механика начата
+DB transactions for money operations
+Double-entry ledger enforcement
+Event bus
+Notification system
+Wholesale module

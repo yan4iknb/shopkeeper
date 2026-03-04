@@ -1,312 +1,166 @@
-# SHOPKEEPER DOMAIN MODEL v1.6
+# SHOPKEEPER MODULE ARCHITECTURE
 
-Last Update: 02.03.2026
-
----
-
-## Core Philosophy
-
-Hybrid architecture:
-
-Retail = Escrow-controlled marketplace  
-Wholesale = Public B2B lot exchange  
-Wholesale Premium = Manual Escrow Guarantee Module  
-Promotion Layer = Paid visibility engine  
-Notification Layer = Event-driven user engagement system  
-Audit Layer = Immutable state tracking system  
+Last Update: 04.03.2026
 
 ---
 
-# Roles
+# Core Modules
 
-UserRole:
+System built with modular service architecture.
 
-- buyer
-- seller
-- trusted_seller
-- admin
+Each module contains:
 
-TrustLevel:
-
-- normal
-- trusted
-- suspended
-
-Only trusted sellers may be eligible for Premium Guarantee.  
-Admin override always possible (audited).
+Repository
+Service
+Domain Logic
 
 ---
 
-# Product (Retail)
+# Modules
 
-Product:
+## Retail Module
 
-- id: UUID
-- sellerId: User.id
-- type: retail (system-defined)
-- condition: new | used
-- title: string
-- price: float
-- currency: string
-- maxQuantityPerOrder: int (required, DB default = 1)
-- status: draft | active
-- createdAt
-- updatedAt
+Purpose:
 
-ProductImage:
+Retail marketplace listings.
 
-- id
-- productId
-- url
-- isPrimary
-- createdAt
+Components:
+
+RetailRepository
+RetailService
+
+Functions:
+
+createRetailProduct()
+publishProduct()
+
+Status:
+
+Stable
 
 ---
 
-## Retail Business Rules (v1 Stable)
+## Order Module
 
-1. Product creation allowed only for role = seller
-2. price must be > 0
-3. currency required
-4. condition allowed values: new | used
-5. maxQuantityPerOrder required
-6. Default status on creation = draft
-7. Publication must be separate use-case
-8. Used retail requires:
-   - at least one image
-   - moderation before activation
-9. Only seller-owner or admin may publish
-10. Publication writes AuditLog event
+Purpose:
 
----
+Order lifecycle management.
 
-## Retail Lifecycle
+Components:
 
-draft → active
+OrderRepository
+OrderService
 
-State transition must go through Service layer.
+Functions:
 
----
+createOrder()
+confirmOrder()
 
-# Order (Escrow Retail)
+Order lifecycle:
 
-Order:
+created
+confirmed
+funds_frozen
+completed
 
-- id
-- buyerId
-- sellerId
-- productId
-- status:
-  - created
-  - funds_frozen
-  - awaiting_admin_review (future)
-  - approved (future)
-  - rejected (future)
-  - cancelled_by_admin (future)
-  - completed (future)
-- createdAt
-- updatedAt
+Status:
 
-Payment (future full integration):
-
-- id
-- orderId
-- amount
-- currency
-- status:
-  - initiated
-  - frozen
-  - released
-  - refunded
-  - failed
+Stable (Phase 1)
 
 ---
 
-## Order Lifecycle (Escrow Phase 1)
+## Ledger Module
 
-created  
-→ funds_frozen  
+Purpose:
 
-Rules:
+Financial accounting system.
 
-1. Only buyer can create order
-2. Buyer cannot buy own product
-3. Only active product can be ordered
-4. Only buyer can confirm order
-5. confirmOrder moves:
-   created → funds_frozen
-6. Every transition writes AuditLog
-7. State transitions only via Service layer
+Components:
 
-Escrow logic will expand in Phase 2.
+LedgerService
 
----
+Functions:
 
-# Wholesale (Public Lot Exchange)
+freezeFunds()
+releaseFunds()
 
-WholesaleOffer:
+Ledger structure:
 
-- id
-- sellerId
-- modelName
-- condition
-- location
-- quantityAvailable
-- description
-- expiresAt
-- status:
-  - active
-  - expired
-  - suspended
-- createdAt
-- updatedAt
+Wallet
+LedgerEntry
 
-WholesalePriceTier:
+Status:
 
-- id
-- wholesaleOfferId
-- minQuantity
-- pricePerUnit
-
-Rules:
-
-- Auto-expire after 72h
-- Public visibility
-- No escrow
-- No stock reservation
-- Max 3 price tiers
-- minQuantity increasing
-- minQuantity ≤ quantityAvailable
-- price decreases or stays equal
+Working
 
 ---
 
-# Promotion Module
+## Wallet Module
 
-Promotion:
+Purpose:
 
-- id
-- entityType (product | wholesale)
-- entityId
-- sellerId
-- promotionType:
-  - boost
-  - featured
-  - pinned
-- startsAt
-- expiresAt
-- isActive
-- createdAt
+User balances.
 
-Rules:
+Components:
 
-- Does not modify entity data
-- Affects sorting only
-- Expired promotions ignored
-- Multiple historical records allowed
+Wallet table
+
+Functions:
+
+balance management
+fund transfers
+
+Status:
+
+Working
 
 ---
 
-# Notification & Push Module
+## Audit Module
 
-Notification:
+Purpose:
 
-- id
-- userId
-- type:
-  - retail_order_update
-  - wholesale_new_lot
-  - premium_update
-  - seller_new_offer
-- title
-- message
-- relatedEntityType
-- relatedEntityId
-- isRead
-- createdAt
+Immutable system history.
 
-PushSubscription:
+Components:
 
-- id
-- userId
-- endpoint
-- p256dh
-- auth
-- deviceType
-- createdAt
+AuditRepository
 
-UserNotificationSettings:
+Events:
 
-- userId
-- retailOrderUpdates
-- wholesaleNewLots
-- premiumDealUpdates
-- modelSubscriptionsEnabled
-- sellerSubscriptionsEnabled
+PRODUCT_PUBLISHED
+ORDER_CREATED
+ORDER_CONFIRMED_FUNDS_FROZEN
 
-ModelSubscription:
+Status:
 
-- id
-- userId
-- modelName
-- createdAt
-
-SellerSubscription:
-
-- id
-- userId
-- sellerId
-- createdAt
+Active
 
 ---
 
-# Audit Layer
+# Infrastructure Layer
 
-AuditLog:
+Components:
 
-- id
-- entityType
-- entityId
-- action
-- actorId
-- metadata
-- createdAt
+Prisma Client
+Database
+Migration system
 
-Rules:
+Architecture:
 
-1. Every state transition must generate AuditLog
-2. Audit records are immutable
-3. Audit never modifies domain data
-4. Audit enables:
-   - dispute resolution
-   - fraud analysis
-   - compliance tracking
-   - admin investigation
+Singleton Prisma instance
+Repository abstraction
+
+Status:
+
+Stable
 
 ---
 
-# Architectural Rules
+# Future Modules
 
-1. Business logic exists only in Service layer
-2. Repository layer contains zero business logic
-3. State transitions are explicit and validated
-4. No direct status updates outside Service
-5. Escrow logic isolated from Wholesale
-6. Promotion never modifies entity data
-7. Notification respects user settings
-8. Admin override allowed but audited
-
----
-
-# System Invariants
-
-1. Retail requires maxQuantityPerOrder
-2. Retail default status = draft
-3. Used retail requires image + moderation
-4. Wholesale auto-expires after 72h
-5. Standard Wholesale has no escrow
-6. Promotion never alters entity data
-7. Notification system respects user settings
-8. Admin override always audited
-9. Order transitions are strictly controlled
-10. AuditLog must exist for all critical actions
+Wholesale marketplace
+Notification system
+Promotion module
+Premium B2B verification
+Event bus

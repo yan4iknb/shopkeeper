@@ -1,20 +1,12 @@
 import { prisma } from '../../infrastructure/db/prisma'
-
-type CreateOrderInput = {
-  buyerId: string
-  sellerId: string
-  productId: string
-  status: 'created'
-}
+import { OrderStatus } from '@prisma/client'
 
 export class OrderRepository {
-  async create(data: CreateOrderInput) {
+  async create(data: { buyerId: string; sellerId: string; productId: string }) {
     return prisma.order.create({
       data: {
-        buyerId: data.buyerId,
-        sellerId: data.sellerId,
-        productId: data.productId,
-        status: data.status,
+        ...data,
+        status: OrderStatus.created,
       },
     })
   }
@@ -22,22 +14,10 @@ export class OrderRepository {
   async findById(id: string) {
     return prisma.order.findUnique({
       where: { id },
-      include: {
-        product: true,
-        buyer: true,
-        seller: true,
-      },
     })
   }
 
-  async updateStatus(id: string, status: 'funds_frozen') {
-    return prisma.order.update({
-      where: { id },
-      data: { status },
-    })
-  }
-
-  async updateStatus(id: string, status: string) {
+  async updateStatus(id: string, status: OrderStatus) {
     return prisma.order.update({
       where: { id },
       data: {

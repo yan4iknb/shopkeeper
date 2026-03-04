@@ -68,6 +68,13 @@ enum NotificationType {
   seller_new_offer
 }
 
+enum WithdrawalStatus {
+  pending
+  approved
+  rejected
+  completed
+}
+
 //////////////////////////
 // CORE
 //////////////////////////
@@ -93,10 +100,11 @@ model User {
   sellerSubscriptions  SellerSubscription[]      @relation("SellerSubUser")
   followers            SellerSubscription[]      @relation("SellerSubTarget")
   notificationSettings UserNotificationSettings?
-  
+
   wallet Wallet?
 
   ledgerEntries LedgerEntry[]
+  withdrawals   Withdrawal[]
 }
 
 model AuditLog {
@@ -171,17 +179,16 @@ model Order {
 
   payment Payment?
 
-ledgerEntries LedgerEntry[]
-
+  ledgerEntries LedgerEntry[]
 }
 
 model LedgerEntry {
-  id        String   @id @default(uuid())
-  userId    String?
-  orderId   String?
-  type      String
-  amount    Float
-  currency  String
+  id       String  @id @default(uuid())
+  userId   String?
+  orderId  String?
+  type     String
+  amount   Float
+  currency String
 
   createdAt DateTime @default(now())
 
@@ -201,6 +208,24 @@ model Payment {
   frozenAt   DateTime?
   releasedAt DateTime?
   refundedAt DateTime?
+}
+
+//////////////////////////
+// WITHDRAWALS
+//////////////////////////
+
+model Withdrawal {
+  id       String @id @default(uuid())
+  userId   String
+  amount   Float
+  currency String
+
+  status WithdrawalStatus @default(pending)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
 }
 
 //////////////////////////
@@ -322,12 +347,16 @@ model SellerSubscription {
   createdAt DateTime @default(now())
 }
 
-model Wallet {
-  id        String   @id @default(uuid())
+//////////////////////////
+// WALLET
+//////////////////////////
 
-  userId    String   @unique
-  balance   Float    @default(0)
-  currency  String
+model Wallet {
+  id String @id @default(uuid())
+
+  userId   String @unique
+  balance  Float  @default(0)
+  currency String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
