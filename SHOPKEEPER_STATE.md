@@ -1,6 +1,6 @@
 # SHOPKEEPER STATE FILE
 
-Last Update: 04.03.2026
+Last Update: 05.03.2026
 
 ---
 
@@ -34,6 +34,64 @@ Singleton Prisma Client
 Clean migration history
 Binary engine
 Stable DB connection
+
+---
+
+# Current Project Architecture
+
+Project structure:
+
+shopkeeper
+│
+├ app
+│ ├ app.bootstrap.ts
+│ └ app.container.ts
+│
+├ infrastructure
+│ ├ db
+│ │ └ prisma.ts
+│ │
+│ └ events
+│ └ event-bus.ts
+│
+├ modules
+│ ├ audit
+│ ├ ledger
+│ ├ order
+│ │ ├ order.repository.ts
+│ │ ├ order.service.ts
+│ │ ├ order.events.ts
+│ │ └ order.state.ts
+│ │
+│ ├ retail
+│ ├ user
+│ ├ wallet
+│ └ withdrawal
+│
+├ prisma
+│ ├ schema.prisma
+│ └ migrations
+│
+└ scripts
+└ test-retail.ts
+
+Architecture type:
+
+Modular Monolith
+
+Service Flow:
+
+Scripts
+↓
+Bootstrap
+↓
+App Container
+↓
+Services
+↓
+Repositories
+↓
+Prisma
 
 ---
 
@@ -111,10 +169,64 @@ Escrow Wallet
 
 LedgerEntry table used for double-entry accounting
 
-Audit events:
+Wallet operations:
+
+createWallet()
+updateBalance()
+
+---
+
+# Event System Introduced
+
+Infrastructure:
+
+EventBus
+
+Location:
+
+infrastructure/events/event-bus.ts
+
+Order events:
 
 ORDER_CREATED
-ORDER_CONFIRMED_FUNDS_FROZEN
+ORDER_CONFIRMED
+ORDER_COMPLETED
+
+Purpose:
+
+Decouple services from listeners.
+
+Future listeners:
+
+Audit
+Notifications
+Analytics
+Webhooks
+
+---
+
+# Application Bootstrap Layer
+
+New application core introduced.
+
+Location:
+
+app/app.bootstrap.ts
+app/app.container.ts
+
+Purpose:
+
+Centralized dependency container
+Service initialization
+Module event registration
+
+System boot flow:
+
+bootstrapApp()
+↓
+register module events
+↓
+create service container
 
 ---
 
@@ -156,10 +268,16 @@ refunded
 
 ---
 
-Additions planned:
+# Planned Additions
 
 DB transactions for money operations
+
 Double-entry ledger enforcement
-Event bus
-Notification system
+
+Notification module
+
 Wholesale module
+
+Analytics module
+
+Promotion system
